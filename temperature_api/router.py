@@ -7,10 +7,12 @@ from city_crud_api.models import DBCity
 from city_crud_api.schemas import CityBaseModel
 from database import get_db
 from temperature_api import crud
-from temperature_api.crud import get_location_key_of_whether_api, get_temperature_by_location_key
+from temperature_api.crud import get_location_key_of_whether_api, get_temperature_by_location_key, add_temperature_to_db
 from temperature_api.models import DBTemperature
 from temperature_api.schemas import Temperature, TemperatureValue
 
+import asyncio
+import httpx
 
 router = APIRouter()
 
@@ -31,15 +33,10 @@ def read_temperatures(city_id: int | None = None, db: Session = Depends(get_db))
 
 
 @router.post("/temperatures/update", tags=["temperatures"])
-def update_temperatures(db: Session = Depends(get_db)):
+async def update_temperatures(db: Session = Depends(get_db)):
     cities_id_name = db.execute(select(DBCity.id, DBCity.name)).all()
-    for id, name in cities_id_name:
-        key = get_location_key_of_whether_api(name)
-        temperature_value = get_temperature_by_location_key(key)
-        temperature_db = DBTemperature(
-            city_id=id,
-            temperature=temperature_value,
-        )
-        db.add(temperature_db)
-    db.commit()
-    return {"True": True}
+    async with httpx.AsyncClient() as client:
+        async with asyncio.TaskGroup() as tg:
+            [tg.create_task(add_temperature_to_db(id=id, name=name, db=db, client=client)) for id, name in cities_id_name]
+        db.commit()
+    return {"Updated": True}
