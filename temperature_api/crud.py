@@ -31,6 +31,6 @@ def get_temperatures(db: Session):
 
 
 def get_city_temperatures(city_id: int, db: Session):
-    stmt = select(DBTemperature.temperature, DBTemperature.data_time).filter_by(city_id=city_id)
+    stmt = select(DBTemperature.temperature, DBTemperature.date_time).filter_by(city_id=city_id)
     city_temperature_list = db.execute(stmt).all()
     return city_temperature_list
