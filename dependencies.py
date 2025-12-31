@@ -24,7 +24,6 @@ async def get_async_db() -> AsyncSession:
         yield db
     finally:
         await async_engine.dispose()
-        await db.close()
 
 
 #annotates

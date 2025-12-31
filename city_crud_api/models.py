@@ -10,6 +10,6 @@ class DBCity(Base):
     __tablename__ = "city"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(30))
+    name: Mapped[str] = mapped_column(String(64))
     additional_info: Mapped[str] = mapped_column(String(255), nullable=True)
     temperatures: Mapped[list[DBTemperature]] = relationship(back_populates="city")

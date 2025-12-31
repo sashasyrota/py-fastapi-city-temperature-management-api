@@ -16,7 +16,7 @@ import httpx
 router = APIRouter()
 
 
-@router.get("/temperatures/", tags=["temperatures"], response_model=Union[list[TemperatureValue], list[Temperature]])
+@router.get("/temperatures/", tags=["temperatures"], response_model=Union[list[Temperature], list[TemperatureValue]])
 def read_temperatures(db: DbSyncDep, city_id: CityIdQuery):
     if city_id:
         city_temperature_list = crud.get_city_temperatures(city_id=city_id, db=db)
