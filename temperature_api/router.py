@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from typing import Union
 
 from city_crud_api.models import DBCity
-from city_crud_api.schemas import CityBaseModel
-from database import get_db
+from dependencies import get_db, get_async_db, DbAsyncDep, DbSyncDep, CityIdQuery
 from temperature_api import crud
-from temperature_api.crud import get_location_key_of_whether_api, get_temperature_by_location_key, add_temperature_to_db
-from temperature_api.models import DBTemperature
+from temperature_api.crud import  add_temperature_to_db
 from temperature_api.schemas import Temperature, TemperatureValue
 
 import asyncio
@@ -18,7 +17,7 @@ router = APIRouter()
 
 
 @router.get("/temperatures/", tags=["temperatures"], response_model=Union[list[TemperatureValue], list[Temperature]])
-def read_temperatures(city_id: int | None = None, db: Session = Depends(get_db)):
+def read_temperatures(db: DbSyncDep, city_id: CityIdQuery):
     if city_id:
         city_temperature_list = crud.get_city_temperatures(city_id=city_id, db=db)
 
@@ -33,10 +32,11 @@ def read_temperatures(city_id: int | None = None, db: Session = Depends(get_db))
 
 
 @router.post("/temperatures/update", tags=["temperatures"])
-async def update_temperatures(db: Session = Depends(get_db)):
-    cities_id_name = db.execute(select(DBCity.id, DBCity.name)).all()
+async def update_temperatures(db_async: DbAsyncDep):
+    cities_id_name = await db_async.execute(select(DBCity.id, DBCity.name))
+    result_cities_id_name = cities_id_name.all()
     async with httpx.AsyncClient() as client:
         async with asyncio.TaskGroup() as tg:
-            [tg.create_task(add_temperature_to_db(id=id, name=name, db=db, client=client)) for id, name in cities_id_name]
-        db.commit()
-    return {"Updated": True}
+            [tg.create_task(add_temperature_to_db(id=id, name=name, db_async=db_async, client=client)) for id, name in result_cities_id_name]
+        await db_async.commit()
+        return {"Updated": True}

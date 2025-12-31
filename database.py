@@ -1,22 +1,30 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-SQLALCHEMY_DATABASE_URL = 'sqlite:///./city_temperature.db'
+#sync_version
+SQLALCHEMY_SYNC_DATABASE_URL = 'sqlite:///./city_temperature.db'
 
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
+sync_engine = create_engine(
+    SQLALCHEMY_SYNC_DATABASE_URL,
     connect_args={"check_same_thread": False}
 )
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
 
-def get_db() -> Session:
-    db = SessionLocal()
 
-    try:
-        yield db
-    finally:
-        db.close()
+
+
+#async_version
+SQLALCHEMY_ASYNC_DATABASE_URL = 'sqlite+aiosqlite:///./city_temperature.db'
+
+async_engine = create_async_engine(
+    SQLALCHEMY_ASYNC_DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+AsyncSessionLocal = async_sessionmaker(async_engine, autocommit=False, autoflush=False)
+
+
+
 
 
 Base = declarative_base()

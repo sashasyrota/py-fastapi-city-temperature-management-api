@@ -1,7 +1,7 @@
 import datetime
 
 
-from sqlalchemy import String, DateTime, func, ForeignKey
+from sqlalchemy import DateTime, func, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -23,4 +23,4 @@ class DBTemperature(Base):
             DateTime(timezone=True),
             server_default=func.now()
     )
-    temperature: Mapped[int] = mapped_column()
+    temperature: Mapped[float] = mapped_column()
